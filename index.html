@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16796a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Konsumtracker: Was wäre daraus geworden?</title>
+<style>
+:root{
+  --bg:#e9eff2;--surface:#fff;--ink:#12263a;--muted:#5b6f80;--line:#cfd9e0;
+  --grow:#16796a;--spend:#b4493a;--soft:#dcebe8;
+  --font:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#0e1a25;--surface:#16273600;--surface:#162736;--ink:#e5eef4;--muted:#93a7b6;--line:#26394a;--grow:#4cc2a8;--spend:#ec8a75;--soft:#183a3a;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#0e1a25;--surface:#162736;--ink:#e5eef4;--muted:#93a7b6;--line:#26394a;--grow:#4cc2a8;--spend:#ec8a75;--soft:#183a3a;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.5;font-size:16px}
+main{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.1rem;font-weight:500;color:var(--muted);margin:0 0 14px}
+h2{font-size:1.15rem;margin:0 0 12px;font-weight:700}
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px 20px}
+.hero p{margin:0;font-size:1.05rem;color:var(--muted)}
+.big{display:block;font-size:clamp(2.4rem,11vw,4.2rem);font-weight:700;line-height:1.05;letter-spacing:-.02em;color:var(--grow);margin:6px 0 10px;overflow-wrap:anywhere}
+.hero b{color:var(--ink);font-weight:700}
+.spent{color:var(--spend);font-weight:700}
+section{margin-top:22px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+label{display:block;font-size:.88rem;color:var(--muted);margin-bottom:4px}
+input,select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 11px;min-height:44px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--grow);outline-offset:2px}
+.seg{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.seg button{flex:1;min-width:150px}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:10px 14px;min-height:44px}
+button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button.primary{background:var(--grow);color:#fff;border-color:var(--grow);font-weight:700;width:100%;margin-top:12px}
+:root[data-theme="dark"] button.primary,:root:not([data-theme="light"]) button.primary{color:#06201b}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) button.primary{color:#fff}}
+.note{font-size:.85rem;color:var(--muted);margin:10px 0 0}
+.err{color:var(--spend);font-size:.9rem;margin:8px 0 0;min-height:1.3em}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-family:var(--font);font-size:11px}
+.legend{display:flex;gap:16px;font-size:.85rem;color:var(--muted);margin-top:6px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.cat{display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:center;margin:8px 0;font-size:.92rem}
+.bar{height:10px;background:var(--bg);border-radius:6px;overflow:hidden}
+.bar span{display:block;height:100%;background:var(--grow);border-radius:6px}
+.item{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:12px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .nm{font-weight:500;overflow-wrap:anywhere}
+.item .meta{color:var(--muted);font-size:.85rem}
+.item .val{text-align:right;color:var(--grow);font-weight:700}
+.item .was{text-align:right;color:var(--spend);font-size:.85rem}
+.item button{grid-column:1/-1;justify-self:start;min-height:32px;padding:2px 10px;font-size:.8rem;color:var(--muted)}
+.empty{color:var(--muted);margin:0}
+textarea{width:100%;min-height:120px;margin-top:10px;font:.8rem ui-monospace,Menlo,monospace;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px}
+.favs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.favs span{display:inline-flex}.favs button{min-height:36px;padding:2px 12px}.favs button+button{padding:2px 9px;color:var(--muted)}
+.item .acts{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}.pres{font-size:1.05rem;margin:12px 0 0}.cat small{color:var(--muted)}
+@media (max-width:420px){.cat{grid-template-columns:90px 1fr auto}}
+</style>
+</head>
+<body>
+<main>
+<h1>Konsumtracker</h1>
+
+<div class="hero" aria-live="polite">
+  <p id="heroTop">Trage dein Renteneintrittsdatum und deine erste Ausgabe ein.</p>
+  <span class="big" id="heroBig">–</span>
+  <p id="heroBot"></p>
+</div>
+
+<section>
+  <h2>Vor dem Kauf prüfen</h2>
+  <div class="panel">
+    <div class="grid">
+      <div><label for="pamt">Betrag in €</label><input id="pamt" type="text" inputmode="decimal" placeholder="129"></div>
+      <div><label for="pfreq">Rhythmus</label><select id="pfreq"><option value="once">Einmalig</option><option value="month">Monatlich bis zur Rente</option><option value="year">Jährlich bis zur Rente</option></select></div>
+    </div>
+    <p class="pres" id="pres" aria-live="polite"></p>
+    <button id="pbuy" type="button" style="margin-top:12px">Doch gekauft: als Ausgabe erfassen</button>
+  </div>
+</section>
+
+<section>
+  <h2>Dein Zeitraum</h2>
+  <div class="panel">
+    <div class="seg" role="group" aria-label="Eingabeart">
+      <button id="mAge" type="button">Geburtsdatum und Rentenalter</button>
+      <button id="mDate" type="button">Renteneintrittsdatum</button>
+    </div>
+    <div class="grid">
+      <div id="gBirth"><label for="birth">Geburtsdatum</label><input id="birth" type="date"></div>
+      <div id="gAge"><label for="age">Rentenalter</label><input id="age" type="number" min="40" max="80" step="1"></div>
+      <div id="gRet"><label for="ret">Renteneintritt</label><input id="ret" type="date"></div>
+      <div><label for="rate">ETF-Rendite pro Jahr in %</label><input id="rate" type="number" min="0" max="15" step="0.1"></div>
+      <div><label for="infl">Inflation pro Jahr in %</label><input id="infl" type="number" min="0" max="10" step="0.1"></div>
+      <div><label for="rateLo">Rendite vorsichtig in %</label><input id="rateLo" type="number" min="0" max="15" step="0.1"></div>
+      <div><label for="rateHi">Rendite optimistisch in %</label><input id="rateHi" type="number" min="0" max="15" step="0.1"></div>
+    </div>
+    <p class="note" id="retNote"></p>
+  </div>
+</section>
+
+<section>
+  <h2>Ausgabe erfassen</h2>
+  <div id="favs" class="favs"></div>
+  <div class="panel">
+    <div class="grid">
+      <div><label for="name">Wofür?</label><input id="name" type="text" maxlength="80" placeholder="z. B. Coffee to go"></div>
+      <div><label for="amt">Betrag in €</label><input id="amt" type="text" inputmode="decimal" placeholder="4,50"></div>
+      <div><label for="date">Datum</label><input id="date" type="date"></div>
+      <div><label for="cat">Kategorie</label>
+        <select id="cat">
+          <option>Essen und Trinken</option><option>Kleidung</option><option>Technik</option>
+          <option>Freizeit</option><option>Reisen</option><option>Abos</option><option>Sonstiges</option>
+        </select></div>
+      <div><label for="freq">Rhythmus</label><select id="freq"><option value="once">Einmalig</option><option value="month">Monatlich</option><option value="year">Jährlich</option></select></div>
+      <div><label for="until">Bis (leer = heute)</label><input id="until" type="date"></div>
+    </div>
+    <p class="err" id="err" role="alert"></p>
+    <button class="primary" id="add" type="button">Ausgabe hinzufügen</button>
+  </div>
+</section>
+
+<section id="chartSec" hidden>
+  <h2>Verlauf bis zur Rente</h2>
+  <div class="panel">
+    <svg class="chart" id="chart" viewBox="0 0 600 230" role="img" aria-label="Verlauf der Summe aller Ausgaben und ihres ETF-Werts bis zum Renteneintritt"></svg>
+    <div class="legend"><span><i style="background:var(--grow)"></i>Wert im ETF</span><span><i style="background:var(--spend)"></i>Tatsächlich ausgegeben</span></div>
+  </div>
+</section>
+
+<section id="scSec" hidden>
+  <h2>Drei Szenarien</h2>
+  <div class="panel" id="scen"></div>
+</section>
+
+<section id="moSec" hidden>
+  <h2>Ausgaben pro Monat</h2>
+  <div class="panel" id="months"></div>
+</section>
+
+<section id="catSec" hidden>
+  <h2>Wo steckt das meiste drin?</h2>
+  <div class="panel" id="cats"></div>
+</section>
+
+<section>
+  <h2>Deine Ausgaben</h2>
+  <div class="grid" style="margin-bottom:12px">
+    <div><label for="fRange">Zeitraum</label><select id="fRange"><option value="">Alle</option><option value="year">Dieses Jahr</option><option value="12m">Letzte 12 Monate</option></select></div>
+    <div><label for="fCat">Kategorie</label><select id="fCat"><option value="">Alle</option><option>Essen und Trinken</option><option>Kleidung</option><option>Technik</option><option>Freizeit</option><option>Reisen</option><option>Abos</option><option>Sonstiges</option></select></div>
+  </div>
+  <div class="panel" id="list"><p class="empty">Noch keine Ausgaben erfasst.</p></div>
+  <p class="note">Rechenmodell: Betrag × (1 + Rendite)<sup>Jahre bis zur Rente</sup>, jährliche Verzinsung ohne Kosten, Steuern und Inflation. Nur eine Modellrechnung, keine Anlageberatung.</p>
+</section>
+<section>
+  <h2>Daten sichern</h2>
+  <div class="panel">
+    <div class="grid"><button id="bkMake" type="button">Backup als Datei speichern</button><button id="bkPick" type="button">Backup aus Datei laden</button></div>
+    <input id="bkFile" type="file" accept=".json,application/json,text/plain" hidden>
+    <textarea id="bkOut" hidden aria-label="Backup"></textarea>
+    <p class="note" id="bkMsg" role="status"></p>
+    <p class="note">Das Backup enthält Einstellungen, Ausgaben und Favoriten. Die Datei landet bei dir im Download- oder Dateien-Ordner. Sonst liegen die Daten nur in diesem Browser und können beim Löschen der Browserdaten verloren gehen.</p>
+  </div>
+</section>
+</main>
+
+<script>
+(function(){
+  var KEY='konsumtracker-v1';
+  var $=function(id){return document.getElementById(id)};
+  var eur0=new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+  var eur2=new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'});
+  var dfmt=new Intl.DateTimeFormat('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var YR=365.25*864e5;
+  var S={mode:'age',birth:'',age:67,ret:'',rate:7,rateLo:4,rateHi:9,infl:2,items:[],favs:[]};
+
+  try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);if(p&&typeof p==='object'){S=Object.assign(S,p);if(!Array.isArray(S.items))S.items=[]}}}catch(e){}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+  function iso(d){var m=d.getMonth()+1,day=d.getDate();return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function retDate(){
+    if(S.mode==='date')return S.ret?new Date(S.ret+'T00:00:00'):null;
+    if(!S.birth)return null;
+    var b=new Date(S.birth+'T00:00:00');
+    return new Date(b.getFullYear()+Number(S.age||67),b.getMonth(),b.getDate());
+  }
+  function occ(it){
+    var a=new Date(it.date+'T00:00:00');
+    if(!it.freq||it.freq==='once')return [{d:a,amount:it.amount}];
+    var end=it.until?new Date(it.until+'T00:00:00'):new Date(),out=[],k=0,d=a;
+    while(d<=end&&k<1200){
+      out.push({d:d,amount:it.amount});k++;
+      d=it.freq==='month'?new Date(a.getFullYear(),a.getMonth()+k,a.getDate()):new Date(a.getFullYear()+k,a.getMonth(),a.getDate());
+    }
+    if(!out.length)out.push({d:a,amount:it.amount});
+    return out;
+  }
+  function grow(amount,from,to,rate){
+    var y=Math.max(0,(to-from)/YR);
+    return amount*Math.pow(1+rate/100,y);
+  }
+
+  function setMode(m){
+    S.mode=m;save();
+    $('mAge').className=m==='age'?'on':'';$('mDate').className=m==='date'?'on':'';
+    $('gBirth').hidden=$('gAge').hidden=m!=='age';$('gRet').hidden=m!=='date';
+    render();
+  }
+
+  function render(){
+    var ret=retDate(),r=Number(S.rate)||0,infl=Number(S.infl)||0,lo=Number(S.rateLo)||0,hi=Number(S.rateHi)||0,now=new Date();
+    $('retNote').textContent=ret?'Renteneintritt am '+dfmt.format(ret)+'.':'Gib ein Renteneintrittsdatum an, damit die Hochrechnung starten kann.';
+    var items=S.items.slice().sort(function(a,b){return a.date<b.date?1:-1});
+    var fc=$('fCat').value,fr=$('fRange').value;
+    if(fc)items=items.filter(function(i){return i.cat===fc});
+    if(fr){var lim=fr==='year'?now.getFullYear()+'-01-01':iso(new Date(now.getFullYear()-1,now.getMonth(),now.getDate()));items=items.filter(function(i){return i.date>=lim})}
+    var spent=0,future=0,today=0;
+    items.forEach(function(it){
+      it.fv=0;it.paid=0;
+      occ(it).forEach(function(o){
+        it.paid+=o.amount;it.fv+=ret?grow(o.amount,o.d,ret,r):0;today+=grow(o.amount,o.d,now,r);
+      });
+      spent+=it.paid;future+=it.fv;
+    });
+
+    // Hero
+    if(ret&&items.length){
+      $('heroTop').innerHTML='Du hast <span class="spent">'+eur0.format(spent)+'</span> für Unnötiges ausgegeben. Im ETF wären daraus zur Rente';
+      $('heroBig').textContent=eur0.format(future);
+      $('heroBot').innerHTML='geworden, das <b>'+(spent>0?(future/spent).toLocaleString('de-DE',{maximumFractionDigits:1}):'0')+'-Fache</b>. Heute wären es schon '+eur0.format(today)+'.'+(infl>0?' In heutiger Kaufkraft entspricht das etwa '+eur0.format(future/Math.pow(1+infl/100,Math.max(0,(ret-now)/YR)))+'.':'')+' Spanne bei '+lo.toLocaleString('de-DE')+' bis '+hi.toLocaleString('de-DE')+' % Rendite: '+eur0.format(sumAt(items,ret,lo))+' bis '+eur0.format(sumAt(items,ret,hi))+'.';
+    }else if(items.length){
+      $('heroTop').textContent='Du hast '+eur0.format(spent)+' ausgegeben. Trage dein Renteneintrittsdatum ein, um den ETF-Wert zu sehen.';
+      $('heroBig').textContent='–';$('heroBot').textContent='';
+    }else{
+      $('heroTop').textContent='Trage dein Renteneintrittsdatum und deine erste Ausgabe ein.';
+      $('heroBig').textContent='–';$('heroBot').textContent='';
+    }
+
+    // Liste
+    var L=$('list');
+    if(!items.length){L.innerHTML='<p class="empty">Noch keine Ausgaben erfasst.</p>'}
+    else L.innerHTML=items.map(function(it){
+      return '<div class="item"><div class="nm">'+esc(it.name)+'</div><div class="val">'+(ret?eur2.format(it.fv):'–')+'</div>'+
+        '<div class="meta">'+esc(it.cat)+', '+dfmt.format(new Date(it.date+'T00:00:00'))+(it.freq==='month'?', monatlich':it.freq==='year'?', jährlich':'')+(it.until?' bis '+dfmt.format(new Date(it.until+'T00:00:00')):'')+'</div><div class="was">gezahlt: '+eur2.format(it.paid)+'</div>'+
+        '<div class="acts"><button type="button" data-edit="'+it.id+'">Bearbeiten</button><button type="button" data-fav="'+it.id+'">Als Favorit</button><button type="button" data-del="'+it.id+'">Löschen</button></div></div>';
+    }).join('');
+
+    // Kategorien
+    var show=ret&&items.length;
+    $('catSec').hidden=!show;$('chartSec').hidden=!show;$('scSec').hidden=!show;$('moSec').hidden=!items.length;
+    if(items.length)drawMonths(items);
+    if(show)drawScen(items,ret,r,infl);
+    $('favs').innerHTML=S.favs.map(function(f,i){return '<span><button type="button" data-use="'+i+'">'+esc(f.name)+' '+eur2.format(f.amount)+'</button><button type="button" data-unfav="'+i+'" aria-label="Favorit entfernen">×</button></span>'}).join('');
+    calcBuy();
+    if(show){
+      var by={};items.forEach(function(it){by[it.cat]=(by[it.cat]||0)+it.fv});
+      var keys=Object.keys(by).sort(function(a,b){return by[b]-by[a]}),mx=by[keys[0]]||1;
+      $('cats').innerHTML=keys.map(function(k){
+        return '<div class="cat"><span>'+esc(k)+'</span><div class="bar"><span style="width:'+Math.max(3,by[k]/mx*100)+'%"></span></div><span>'+eur0.format(by[k])+'</span></div>';
+      }).join('');
+      drawChart(items,ret,r);
+    }
+  }
+
+  function sumAt(list,ret,rate){var s=0;list.forEach(function(it){occ(it).forEach(function(o){s+=grow(o.amount,o.d,ret,rate)})});return s}
+  function drawScen(items,ret,r,infl){
+    var df=Math.pow(1+infl/100,Math.max(0,(ret-new Date())/YR));
+    var rows=[['Vorsichtig',Number(S.rateLo)||0],['Realistisch',r],['Optimistisch',Number(S.rateHi)||0]];
+    $('scen').innerHTML=rows.map(function(x){var v=sumAt(items,ret,x[1]);
+      return '<div class="cat"><span>'+x[0]+'</span><span>'+x[1].toLocaleString('de-DE')+' % pro Jahr</span><span>'+eur0.format(v)+(infl>0?'<br><small>heute: '+eur0.format(v/df)+'</small>':'')+'</span></div>'}).join('');
+  }
+  function drawMonths(items){
+    var now=new Date(),keys=[],sum={},mf=new Intl.DateTimeFormat('de-DE',{month:'short',year:'2-digit'});
+    for(var k=11;k>=0;k--){var d=new Date(now.getFullYear(),now.getMonth()-k,1),key=d.getFullYear()+'-'+d.getMonth();keys.push([key,mf.format(d)]);sum[key]=0}
+    items.forEach(function(it){occ(it).forEach(function(o){var key=o.d.getFullYear()+'-'+o.d.getMonth();if(key in sum)sum[key]+=o.amount})});
+    var mx=Math.max.apply(null,keys.map(function(k){return sum[k[0]]}))||1;
+    $('months').innerHTML=keys.map(function(k){var v=sum[k[0]];return '<div class="cat"><span>'+k[1]+'</span><div class="bar"><span style="width:'+(v?Math.max(3,v/mx*100):0)+'%;background:var(--spend)"></span></div><span>'+eur0.format(v)+'</span></div>'}).join('');
+  }
+  function calcBuy(){
+    var amt=parseFloat($('pamt').value.replace(/\./g,'').replace(',','.')),ret=retDate(),el=$('pres');
+    if(!isFinite(amt)||amt<=0){el.textContent='Gib den Betrag ein, den du ausgeben willst.';return}
+    if(!ret||ret<=new Date()){el.textContent='Trage zuerst ein Renteneintrittsdatum in der Zukunft ein.';return}
+    var f=$('pfreq').value,it={date:iso(new Date()),amount:amt,freq:f,until:f==='once'?'':iso(ret)};
+    var infl=Number(S.infl)||0,base=sumAt([it],ret,Number(S.rate)||0),df=Math.pow(1+infl/100,(ret-new Date())/YR);
+    el.innerHTML='Zur Rente wären das <b>'+eur0.format(base)+'</b> (vorsichtig '+eur0.format(sumAt([it],ret,Number(S.rateLo)||0))+', optimistisch '+eur0.format(sumAt([it],ret,Number(S.rateHi)||0))+')'+(infl>0?', in heutiger Kaufkraft etwa '+eur0.format(base/df):'')+'.';
+  }
+  function drawChart(items,ret,r){
+    var start=Math.min.apply(null,items.map(function(i){return new Date(i.date+'T00:00:00').getTime()}));
+    var end=ret.getTime();
+    if(end<=start){$('chartSec').hidden=true;return}
+    var N=48,pts=[],mx=1,W=600,H=230,L=52,R=10,T=12,B=26;
+    for(var k=0;k<=N;k++){
+      var t=start+(end-start)*k/N,v=0,s=0;
+      items.forEach(function(it){occ(it).forEach(function(o){var d=o.d.getTime();if(d<=t){s+=o.amount;v+=o.amount*Math.pow(1+r/100,(t-d)/YR)}})});
+      pts.push([t,v,s]);mx=Math.max(mx,v,s);
+    }
+    var X=function(t){return L+(t-start)/(end-start)*(W-L-R)};
+    var Y=function(v){return T+(1-v/mx)*(H-T-B)};
+    var line=function(i){return pts.map(function(p,j){return (j?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[i]).toFixed(1)}).join('')};
+    var area=line(1)+'L'+X(end).toFixed(1)+' '+Y(0)+'L'+X(start).toFixed(1)+' '+Y(0)+'Z';
+    var g='';
+    [0,.5,1].forEach(function(f){var y=Y(mx*f);g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'" stroke="var(--line)"/><text x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end">'+eur0.format(mx*f)+'</text>'});
+    g+='<path d="'+area+'" fill="var(--soft)"/><path d="'+line(1)+'" fill="none" stroke="var(--grow)" stroke-width="2.5"/><path d="'+line(2)+'" fill="none" stroke="var(--spend)" stroke-width="2"/>';
+    g+='<text x="'+L+'" y="'+(H-6)+'">'+new Date(start).getFullYear()+'</text><text x="'+(W-R)+'" y="'+(H-6)+'" text-anchor="end">'+ret.getFullYear()+'</text>';
+    $('chart').innerHTML=g;
+  }
+
+  // Events
+  $('mAge').onclick=function(){setMode('age')};
+  $('mDate').onclick=function(){setMode('date')};
+  $('birth').onchange=function(){S.birth=this.value;save();render()};
+  $('age').oninput=function(){S.age=this.value;save();render()};
+  $('ret').onchange=function(){S.ret=this.value;save();render()};
+  $('rate').oninput=function(){S.rate=this.value;save();render()};
+  $('infl').oninput=function(){S.infl=this.value;save();render()};
+  $('rateLo').oninput=function(){S.rateLo=this.value;save();render()};
+  $('rateHi').oninput=function(){S.rateHi=this.value;save();render()};
+  $('fRange').onchange=render;$('fCat').onchange=render;
+
+  function add(){
+    var name=$('name').value.trim(),amt=parseFloat($('amt').value.replace(/\./g,'').replace(',','.')),d=$('date').value;
+    if(!name){$('err').textContent='Gib an, wofür du das Geld ausgegeben hast.';return}
+    if(!isFinite(amt)||amt<=0){$('err').textContent='Gib einen Betrag über 0 € ein, z. B. 4,50.';return}
+    if(!d){$('err').textContent='Wähle das Datum der Ausgabe.';return}
+    $('err').textContent='';
+    var fq=$('freq').value,un=fq==='once'?'':$('until').value;
+    if(un&&un<d){$('err').textContent='Das Enddatum liegt vor dem Startdatum.';return}
+    var rec={id:editId||Date.now()+Math.floor(Math.random()*1000),name:name,amount:amt,date:d,cat:$('cat').value,freq:fq,until:un};
+    if(editId){S.items=S.items.map(function(i){return i.id===editId?rec:i})}else S.items.push(rec);
+    editId=null;$('add').textContent='Ausgabe hinzufügen';
+    save();$('name').value='';$('amt').value='';$('name').focus();render();
+  }
+  $('add').onclick=add;
+  ['name','amt','date'].forEach(function(id){$(id).addEventListener('keydown',function(e){if(e.key==='Enter')add()})});
+  $('list').addEventListener('click',function(e){
+    var ed=e.target.getAttribute&&e.target.getAttribute('data-edit');
+    if(ed){startEdit(ed);return}
+    var fv=e.target.getAttribute&&e.target.getAttribute('data-fav');
+    if(fv){addFav(fv);return}
+    var id=e.target.getAttribute&&e.target.getAttribute('data-del');
+    if(id){S.items=S.items.filter(function(i){return String(i.id)!==id});save();render()}
+  });
+
+  var editId=null;
+  function fillForm(o){
+    $('name').value=o.name||'';$('amt').value=String(o.amount).replace('.',',');
+    if(o.cat)$('cat').value=o.cat;
+    $('freq').value=o.freq||'once';$('until').value=o.until||'';if(o.date)$('date').value=o.date;
+    $('add').scrollIntoView({block:'center'});$('name').focus();
+  }
+  function startEdit(id){
+    var it=S.items.filter(function(i){return String(i.id)===id})[0];if(!it)return;
+    editId=it.id;fillForm(it);$('add').textContent='Änderung speichern';
+  }
+  function addFav(id){
+    var it=S.items.filter(function(i){return String(i.id)===id})[0];if(!it)return;
+    if(!S.favs.some(function(f){return f.name===it.name&&f.amount===it.amount}))S.favs.push({name:it.name,amount:it.amount,cat:it.cat,freq:it.freq||'once'});
+    save();render();
+  }
+  $('favs').addEventListener('click',function(e){
+    var u=e.target.getAttribute('data-use'),x=e.target.getAttribute('data-unfav');
+    if(u!==null){var f=S.favs[+u];if(f){editId=null;$('add').textContent='Ausgabe hinzufügen';fillForm({name:f.name,amount:f.amount,cat:f.cat,freq:f.freq,until:'',date:iso(new Date())})}}
+    else if(x!==null){S.favs.splice(+x,1);save();render()}
+  });
+  $('pamt').oninput=calcBuy;$('pfreq').onchange=calcBuy;
+  $('pbuy').onclick=function(){
+    var amt=parseFloat($('pamt').value.replace(/\./g,'').replace(',','.'));if(!isFinite(amt)||amt<=0)return;
+    var ret=retDate(),f=$('pfreq').value;editId=null;$('add').textContent='Ausgabe hinzufügen';
+    fillForm({amount:amt,freq:f,until:(f==='once'||!ret)?'':iso(ret),date:iso(new Date())});
+  };
+  function initFields(){
+    $('birth').value=S.birth;$('age').value=S.age;$('ret').value=S.ret;$('rate').value=S.rate;$('infl').value=S.infl;$('rateLo').value=S.rateLo;$('rateHi').value=S.rateHi;
+  }
+  $('bkMake').onclick=function(){
+    var data=JSON.stringify(S),fn='konsumtracker-backup-'+iso(new Date())+'.json';
+    try{
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+      a.download=fn;document.body.appendChild(a);a.click();a.remove();
+      $('bkMsg').textContent='Backup gespeichert. Du findest die Datei im Download-Ordner.';
+    }catch(e){
+      var t=$('bkOut');t.hidden=false;t.value=data;t.select();
+      $('bkMsg').textContent='Download nicht möglich. Text markiert, bitte selbst kopieren.';
+    }
+  };
+  function bkImport(){
+    try{
+      var p=JSON.parse($('bkOut').value);
+      if(!p||!Array.isArray(p.items))throw 0;
+      p.items=p.items.filter(function(i){return i&&typeof i.name==='string'&&isFinite(i.amount)&&/^\d{4}-\d\d-\d\d$/.test(i.date)}).map(function(i){i.amount=Number(i.amount);i.cat=String(i.cat||'Sonstiges');return i});
+      S=Object.assign({mode:'age',birth:'',age:67,ret:'',rate:7,rateLo:4,rateHi:9,infl:2,items:[],favs:[]},p);
+      if(!Array.isArray(S.favs))S.favs=[];
+      save();initFields();setMode(S.mode);
+      $('bkMsg').textContent='Backup importiert: '+S.items.length+' Ausgaben.';
+    }catch(e){$('bkMsg').textContent='Das ist kein gültiges Backup. Füge den kompletten Text ein.'}
+  };
+  $('bkPick').onclick=function(){$('bkFile').click()};
+  $('bkFile').onchange=function(){
+    var f=this.files&&this.files[0];if(!f)return;
+    var rd=new FileReader();rd.onload=function(){$('bkOut').value=String(rd.result);bkImport()};rd.readAsText(f);this.value='';
+  };
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+  // Init
+  initFields();
+  $('birth').value=S.birth;$('age').value=S.age;$('ret').value=S.ret;$('rate').value=S.rate;$('infl').value=S.infl;
+  $('date').value=iso(new Date());
+  setMode(S.mode);
+  if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
+})();
+</script>
+</body>
+</html>
